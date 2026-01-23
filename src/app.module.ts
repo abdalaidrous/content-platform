@@ -1,34 +1,28 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import appConfig from './config/app.config';
-import databaseConfig from './config/database.config';
-import authConfig from './config/auth.config';
-import { envValidation } from './config/env.validation';
+import { UsersModule } from './modules/users/users.module';
+import { CoreModule } from '@/core/core.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 /*
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | AppModule
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 |
 | The AppModule is the root module of the application and serves as the main
-| entry point for configuring global application dependencies.
+| entry point for composing the application structure.
 |
-| It initializes the NestJS ConfigModule with global scope, loads all
-| application configuration sources (app, database, and authentication),
-| and applies environment variable validation at startup to ensure the
-| application fails fast in case of misconfiguration.
+| It imports the CoreModule, which is responsible for initializing global
+| infrastructure concerns such as configuration, internationalization,
+| and other cross-cutting services required at application startup.
 |
-| This module acts as the foundation upon which all other application
-| modules are composed.
+| Feature-specific modules (e.g., UsersModule) are composed here to expose
+| their functionality to the application.
+|
+| This module remains intentionally lightweight and free of business
+| logic, acting solely as the top-level module aggregator.
 |
 */
 @Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [appConfig, databaseConfig, authConfig],
-      validationSchema: envValidation,
-    }),
-  ],
+  imports: [CoreModule, UsersModule, AuthModule],
 })
 export class AppModule {}

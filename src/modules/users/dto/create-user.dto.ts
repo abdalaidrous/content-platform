@@ -12,6 +12,7 @@ import {
 import { UserRole } from '@/modules/users/enums/user-role.enum';
 import { Type } from 'class-transformer';
 import { CreateProfileDto } from '@/modules/users/dto/create-profile.dto';
+import { Match } from '@/common/validators/match.validator';
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +58,12 @@ export class CreateUserDto {
   @MinLength(8)
   @MaxLength(72)
   password: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(72)
+  @Match('password', { message: 'errors.PASSWORD_CONFIRMATION_MISMATCH' })
+  confirmNewPassword: string;
 
   @IsEnum(UserRole)
   role: UserRole;

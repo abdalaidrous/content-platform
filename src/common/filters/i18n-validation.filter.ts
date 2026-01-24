@@ -102,7 +102,7 @@ export class I18nValidationFilter implements ExceptionFilter {
     | `Accept-Language` request header, with a fallback to Arabic.
     |
     */
-    const lang = request.headers['accept-language']?.toString() || 'ar';
+    const lang = request.headers['accept-language']?.toString() || 'en';
 
     /*
     |----------------------------------------------------------------------

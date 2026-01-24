@@ -91,6 +91,7 @@ export class PasswordService {
     }
 
     await user.setPassword(dto.password);
+    await this.usersService.save(user);
 
     return {
       message: this.i18n.t(MESSAGES.SUCCESS.PASSWORD_RESET_SUCCESS),
@@ -150,6 +151,8 @@ export class PasswordService {
     |
     */
     await user.setPassword(dto.newPassword);
+    await this.usersService.save(user);
+
     return {
       message: this.i18n.t(MESSAGES.SUCCESS.PASSWORD_CHANGED_SUCCESSFULLY),
     };

@@ -57,10 +57,10 @@ export class UsersService extends BaseCrudService<
       searchableColumns: ['name', 'email'],
       filterableColumns: {
         isActive: true,
-        role: true,
         createdAt: true,
       },
       defaultSortBy: [['createdAt', 'DESC']],
+      relations: ['profile'],
     };
   }
 
@@ -161,6 +161,22 @@ export class UsersService extends BaseCrudService<
   }
 
   /*
+  |---------------------------------------------------------------------------
+  | save
+  |---------------------------------------------------------------------------
+  |
+  | Persists the given User entity to the database.
+  |
+  | This method acts as a thin abstraction over the repository layer,
+  | allowing higher-level services to persist user state without
+  | coupling directly to the ORM.
+  |
+  */
+  async save(user: User): Promise<User> {
+    return this.userRepo.save(user);
+  }
+
+  /*
   |--------------------------------------------------------------------------
   | create
   |--------------------------------------------------------------------------
@@ -221,7 +237,7 @@ export class UsersService extends BaseCrudService<
     const { profile = {} } = dto;
     const user = this.userRepo.create({ ...dto, role: [effectiveRole] });
     user.profile = this.profileRepo.create({ ...profile });
-    await this.userRepo.save(user);
+    await this.save(user);
     return user;
   }
 

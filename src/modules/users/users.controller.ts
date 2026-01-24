@@ -1,9 +1,13 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { CrudControllerFactory } from '@/common/factories/crud-controller.factory';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { Role } from '@/common/enums/role.enum';
+import { Roles } from '@/common/decorators/roles.decorator';
 
 /*
 |--------------------------------------------------------------------------
@@ -21,6 +25,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 | - /users
 |
 */
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 @Controller('users')
 export class UsersController extends CrudControllerFactory<
   User,

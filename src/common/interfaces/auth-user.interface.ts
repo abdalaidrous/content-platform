@@ -1,4 +1,5 @@
 import { AuthProfile } from '@/common/interfaces/auth-profile.interface';
+import { Role } from '@/common/enums/role.enum';
 
 /*
 |--------------------------------------------------------------------------
@@ -12,6 +13,6 @@ import { AuthProfile } from '@/common/interfaces/auth-profile.interface';
 export interface AuthUser {
   id: string;
   email: string;
-  role: string;
+  role: Role;
   profile: AuthProfile;
 }

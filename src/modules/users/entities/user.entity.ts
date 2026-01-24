@@ -1,7 +1,8 @@
-import { Entity, Column, BeforeInsert } from 'typeorm';
+import { Entity, Column, BeforeInsert, OneToOne } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 import { UserRole } from '@/modules/users/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
+import { Profile } from '@/modules/users/entities/profile.entity';
 
 /*
 |--------------------------------------------------------------------------
@@ -39,11 +40,19 @@ export class User extends BaseEntity {
   @Column({ unique: true })
   email: string;
 
+  @Column({ nullable: true })
+  phone?: string;
+
   @Column()
   password: string;
 
   @Column({ type: 'enum', enum: UserRole, array: true })
   role: UserRole[];
+
+  @OneToOne(() => Profile, (profile) => profile.user, {
+    cascade: true,
+  })
+  profile: Profile;
 
   /*
   |--------------------------------------------------------------------------

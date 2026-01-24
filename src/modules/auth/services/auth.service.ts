@@ -80,17 +80,11 @@ export class AuthService {
   */
   private buildAuthResponse(user: User): LoginResponse {
     const accessToken = this.tokenService.generateAccessToken(user);
-
     return {
       access_token: accessToken.token,
       token_type: 'Bearer',
       expires_in: accessToken.expiresIn,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: { ...this.tokenService.buildJwtPayload(user) },
     };
   }
 

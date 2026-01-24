@@ -11,6 +11,7 @@ import { MESSAGES } from '@/common/constants/messages';
 import { BaseCrudService } from '@/common/services/base-crud.service';
 import { PaginateConfig } from 'nestjs-paginate';
 import { CreateUserInput } from '@/modules/users/interfaces/create-user-input.interface';
+import { Profile } from '@/modules/users/entities/profile.entity';
 
 /*
 |--------------------------------------------------------------------------
@@ -69,6 +70,8 @@ export class UsersService extends BaseCrudService<
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Profile)
+    private readonly profileRepo: Repository<Profile>,
     private readonly i18n: I18nService,
   ) {
     super(userRepo);
@@ -141,26 +144,6 @@ export class UsersService extends BaseCrudService<
 
   /*
   |--------------------------------------------------------------------------
-  | assignRoleIfMissing
-  |--------------------------------------------------------------------------
-  |
-  | Assigns a new role to an existing user if the role is not already
-  | present. Throws an error if the user already exists with the same role.
-  |
-  */
-  private async assignRoleIfMissing(user: User, role: UserRole): Promise<User> {
-    if (user.role.includes(role)) {
-      throw new BadRequestException(
-        this.i18n.t(MESSAGES.ERRORS.USER_ALREADY_EXISTS),
-      );
-    }
-
-    user.role = [...user.role, role];
-    return this.userRepo.save(user);
-  }
-
-  /*
-  |--------------------------------------------------------------------------
   | create
   |--------------------------------------------------------------------------
   |
@@ -196,7 +179,7 @@ export class UsersService extends BaseCrudService<
 
     /*
     |----------------------------------------------------------------------
-    | Role Assignment (Existing User)
+    | Existing User
     |----------------------------------------------------------------------
     |
     | If the user already exists, ensures the requested role is assigned
@@ -204,7 +187,9 @@ export class UsersService extends BaseCrudService<
     |
     */
     if (existingUser) {
-      return this.assignRoleIfMissing(existingUser, effectiveRole);
+      throw new BadRequestException(
+        this.i18n.t(MESSAGES.ERRORS.USER_ALREADY_EXISTS),
+      );
     }
 
     /*
@@ -215,7 +200,9 @@ export class UsersService extends BaseCrudService<
     | Persists the newly created user entity to the database.
     |
     */
+    const { profile = {} } = dto;
     const user = this.userRepo.create({ ...dto, role: [effectiveRole] });
+    user.profile = this.profileRepo.create({ ...profile });
     await this.userRepo.save(user);
     return user;
   }

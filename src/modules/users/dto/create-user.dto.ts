@@ -2,11 +2,16 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
   IsString,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 import { UserRole } from '@/modules/users/enums/user-role.enum';
+import { Type } from 'class-transformer';
+import { CreateProfileDto } from '@/modules/users/dto/create-profile.dto';
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +48,10 @@ export class CreateUserDto {
   @MaxLength(255)
   email: string;
 
+  @IsOptional()
+  @IsPhoneNumber('SA')
+  phone?: string;
+
   @IsString()
   @IsNotEmpty()
   @MinLength(8)
@@ -51,4 +60,9 @@ export class CreateUserDto {
 
   @IsEnum(UserRole)
   role: UserRole;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateProfileDto)
+  profile?: CreateProfileDto;
 }

@@ -1,3 +1,5 @@
+import { AuthProfile } from '@/common/interfaces/auth-profile.interface';
+
 /*
 |--------------------------------------------------------------------------
 | AuthUser
@@ -11,4 +13,5 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  profile: AuthProfile;
 }

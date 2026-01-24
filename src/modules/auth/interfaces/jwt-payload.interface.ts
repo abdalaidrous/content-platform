@@ -1,4 +1,5 @@
 import { UserRole } from '@/modules/users/enums/user-role.enum';
+import { AuthProfile } from '@/common/interfaces/auth-profile.interface';
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +18,7 @@ import { UserRole } from '@/modules/users/enums/user-role.enum';
 | - name : User full name.
 | - email : User email address.
 | - role  : List of roles assigned to the user.
+| - profile  : User profile data associated with the user.
 |
 */
 export interface JwtPayload {
@@ -24,4 +26,5 @@ export interface JwtPayload {
   name: string;
   email: string;
   role: UserRole[];
+  profile: AuthProfile;
 }

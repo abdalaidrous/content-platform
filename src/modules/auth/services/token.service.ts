@@ -50,6 +50,12 @@ export class TokenService {
       name: user.name,
       email: user.email,
       role: user.role,
+      profile: {
+        avatar: user.profile.avatar,
+        bio: user.profile.bio,
+        locale: user.profile.locale,
+        gender: user.profile.gender,
+      },
     };
   }
 

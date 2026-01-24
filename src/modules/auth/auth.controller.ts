@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
 
 import { LoginDto } from './dto/login.dto';
 import { AnonymousGuard } from '@/common/guards/anonymous.guard';
@@ -72,6 +72,21 @@ export class AuthController {
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | getMe
+  |--------------------------------------------------------------------------
+  |
+  | Returns the authenticated user's profile
+  | extracted directly from the JWT access token.
+  |
+  */
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getMe(@CurrentUser() user: AuthUser) {
+    return user;
   }
 
   /*

@@ -1,4 +1,8 @@
 {
   "USER_ALREADY_EXISTS": "User already exists",
-  "INVALID_CREDENTIALS": "Invalid credentials"
+  "INVALID_CREDENTIALS": "Invalid credentials",
+  "PASSWORD_CONFIRMATION_MISMATCH": "Passwords do not match.",
+  "EMAIL_NOT_FOUND": "Email address not found.",
+  "USER_NOT_FOUND": "User not found.",
+  "INVALID_CURRENT_PASSWORD": "The current password is incorrect"
 }

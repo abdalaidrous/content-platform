@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import { I18nService } from 'nestjs-i18n';
 
 import { User } from './entities/user.entity';
@@ -67,10 +67,75 @@ export class UsersService extends BaseCrudService<
   */
   constructor(
     @InjectRepository(User)
-    public readonly userRepo: Repository<User>,
+    private readonly userRepo: Repository<User>,
     private readonly i18n: I18nService,
   ) {
     super(userRepo);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | findById
+  |--------------------------------------------------------------------------
+  |
+  | Retrieves a user by its unique identifier.
+  |
+  | - Returns the user entity if found.
+  | - Throws a BadRequestException if the user does not exist.
+  | - Optional filters can be applied to constrain the lookup
+  |   (e.g. active users, non-deleted users).
+  |
+  */
+  async findById(id: string, filters?: FindOptionsWhere<User>): Promise<User> {
+    const user = await this.userRepo.findOne({
+      where: {
+        id,
+        ...filters,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        this.i18n.t(MESSAGES.ERRORS.USER_NOT_FOUND),
+      );
+    }
+
+    return user;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | findUserByEmail
+  |--------------------------------------------------------------------------
+  |
+  | Retrieves a user by email address.
+  |
+  | - Returns null if no user is found.
+  | - Additional filters can be applied by the caller if needed.
+  |
+  */
+  async findUserByEmail(
+    email: string,
+    filters?: FindOptionsWhere<User>,
+  ): Promise<User | null> {
+    return this.userRepo.findOne({
+      where: {
+        email,
+        ...filters,
+      },
+    });
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | findActiveUserByEmail
+  |--------------------------------------------------------------------------
+  |
+  | Retrieves an active, non-deleted user by email address.
+  |
+  */
+  async findActiveUserByEmail(email: string): Promise<User | null> {
+    return this.findUserByEmail(email, { isActive: true, deletedAt: IsNull() });
   }
 
   /*

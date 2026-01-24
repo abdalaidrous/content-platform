@@ -1,0 +1,5 @@
+{
+  "PASSWORD_RESET_EMAIL_SENT": "If the email exists, a password reset message has been sent to your email.",
+  "PASSWORD_RESET_SUCCESS": "Your password has been reset successfully.",
+  "PASSWORD_CHANGED_SUCCESSFULLY": "Password changed successfully"
+}

@@ -3,11 +3,13 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 import { UsersModule } from '@/modules/users/users.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthService } from '@/modules/auth/services/auth.service';
+import { PasswordService } from '@/modules/auth/services/password.service';
+import { TokenService } from '@/modules/auth/services/token.service';
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +79,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   | - JwtStrategy : Validates incoming JWT access tokens.
   |
   */
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, PasswordService, TokenService, JwtStrategy],
 })
 export class AuthModule {}

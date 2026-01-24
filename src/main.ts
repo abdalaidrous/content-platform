@@ -6,6 +6,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { I18nValidationFilter } from '@/common/filters/i18n-validation.filter';
 
 /*
 |---------------------------------------------------------------------------
@@ -38,7 +39,14 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1',
   });
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+  app.useGlobalFilters(app.get(I18nValidationFilter));
   await app.listen(process.env.PORT ?? 3000);
 }
 

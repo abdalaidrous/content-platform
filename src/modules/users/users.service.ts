@@ -10,6 +10,7 @@ import { UserRole } from './enums/user-role.enum';
 import { MESSAGES } from '@/common/constants/messages';
 import { BaseCrudService } from '@/common/services/base-crud.service';
 import { PaginateConfig } from 'nestjs-paginate';
+import { CreateUserInput } from '@/modules/users/interfaces/create-user-input.interface';
 
 /*
 |--------------------------------------------------------------------------
@@ -168,17 +169,101 @@ export class UsersService extends BaseCrudService<
   | role assignment rules specific to the User domain.
   |
   */
-  async create(dto: CreateUserDto): Promise<User> {
+  async create(dto: CreateUserInput): Promise<User> {
+    /*
+    |--------------------------------------------------------------------------
+    | Role Resolution
+    |--------------------------------------------------------------------------
+    |
+    | Determines the effective role for the user.
+    | Defaults to VIEWER when no role is explicitly provided.
+    |
+    */
+    const effectiveRole = dto.role ?? UserRole.VIEWER;
+
+    /*
+    |----------------------------------------------------------------------
+    | Existing User Lookup
+    |----------------------------------------------------------------------
+    |
+    | Attempts to find an existing user by email in order to enforce
+    | uniqueness and support role augmentation for existing accounts.
+    |
+    */
     const existingUser = await this.userRepo.findOne({
       where: { email: dto.email },
     });
 
+    /*
+    |----------------------------------------------------------------------
+    | Role Assignment (Existing User)
+    |----------------------------------------------------------------------
+    |
+    | If the user already exists, ensures the requested role is assigned
+    | without creating duplicate role entries.
+    |
+    */
     if (existingUser) {
-      return this.assignRoleIfMissing(existingUser, dto.role);
+      return this.assignRoleIfMissing(existingUser, effectiveRole);
     }
 
-    const user = this.userRepo.create({ ...dto, role: [dto.role] });
+    /*
+    |----------------------------------------------------------------------
+    | Persistence
+    |----------------------------------------------------------------------
+    |
+    | Persists the newly created user entity to the database.
+    |
+    */
+    const user = this.userRepo.create({ ...dto, role: [effectiveRole] });
     await this.userRepo.save(user);
     return user;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | createAdmin
+  |--------------------------------------------------------------------------
+  |
+  | Creates a new administrator user or assigns the ADMIN role
+  | to an existing user.
+  |
+  | This method should be used by privileged system workflows
+  | and administrative interfaces only.
+  |
+  */
+  async createAdmin(dto: CreateUserInput): Promise<User> {
+    return this.create({ ...dto, role: UserRole.ADMIN });
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | createEditor
+  |--------------------------------------------------------------------------
+  |
+  | Creates a new editor user or assigns the EDITOR role
+  | to an existing user.
+  |
+  | Editors are typically allowed to manage content but
+  | do not have full administrative privileges.
+  |
+  */
+  async createEditor(dto: CreateUserInput): Promise<User> {
+    return this.create({ ...dto, role: UserRole.EDITOR });
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | createViewer
+  |--------------------------------------------------------------------------
+  |
+  | Creates a new viewer user or assigns the VIEWER role
+  | to an existing user.
+  |
+  | Viewers usually have read-only access to the system.
+  |
+  */
+  async createViewer(dto: CreateUserInput): Promise<User> {
+    return this.create({ ...dto, role: UserRole.VIEWER });
   }
 }

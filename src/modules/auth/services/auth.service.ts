@@ -5,6 +5,7 @@ import { MESSAGES } from '@/common/constants/messages';
 import { LoginResponse } from '@/modules/auth/interfaces/login-response.interface';
 import { TokenService } from '@/modules/auth/services/token.service';
 import { UsersService } from '@/modules/users/users.service';
+import { RegisterDto } from '@/modules/auth/dto/register.dto';
 
 /*
 |--------------------------------------------------------------------------
@@ -67,15 +68,19 @@ export class AuthService {
 
   /*
   |--------------------------------------------------------------------------
-  | login
+  | buildAuthResponse
   |--------------------------------------------------------------------------
   |
-  | Authenticates a user and returns access & refresh tokens.
+  | Builds a standardized authentication response payload
+  | containing the access token and user profile data.
+  |
+  | This method centralizes the response structure used by
+  | authentication-related operations such as login and register.
   |
   */
-  async login(dto: LoginDto): Promise<LoginResponse> {
-    const user = await this.validateCredentials(dto);
+  private buildAuthResponse(user: User): LoginResponse {
     const accessToken = this.tokenService.generateAccessToken(user);
+
     return {
       access_token: accessToken.token,
       token_type: 'Bearer',
@@ -87,5 +92,36 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | login
+  |--------------------------------------------------------------------------
+  |
+  | Authenticates a user and returns access & refresh tokens.
+  |
+  */
+  async login(dto: LoginDto): Promise<LoginResponse> {
+    const user = await this.validateCredentials(dto);
+    return this.buildAuthResponse(user);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | register
+  |--------------------------------------------------------------------------
+  |
+  | Registers a new user and returns an authentication payload.
+  |
+  | Steps:
+  | - Validate registration constraints
+  | - Create a new user
+  | - Generate access token
+  |
+  */
+  async register(dto: RegisterDto): Promise<LoginResponse> {
+    const user = await this.usersService.createViewer(dto);
+    return this.buildAuthResponse(user);
   }
 }

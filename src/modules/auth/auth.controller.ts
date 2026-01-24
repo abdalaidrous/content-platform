@@ -11,6 +11,7 @@ import type { AuthUser } from '@/common/interfaces/auth-user.interface';
 import { ChangePasswordDto } from '@/modules/auth/dto/change-password.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { SuccessResponse } from '@/common/interfaces/success-response.interface';
+import { RegisterDto } from '@/modules/auth/dto/register.dto';
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,20 @@ import { SuccessResponse } from '@/common/interfaces/success-response.interface'
 */
 @Controller('auth')
 export class AuthController {
+  /*
+  |--------------------------------------------------------------------------
+  | Constructor
+  |--------------------------------------------------------------------------
+  |
+  | Injects the required services used by the authentication controller.
+  |
+  | - AuthService     : Handles authentication and registration workflows.
+  | - PasswordService : Manages password recovery and reset operations.
+  |
+  | These services are injected via NestJS dependency injection
+  | to keep the controller thin and focused on request handling.
+  |
+  */
   constructor(
     private readonly authService: AuthService,
     private readonly passwordService: PasswordService,
@@ -40,6 +55,23 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | register
+  |--------------------------------------------------------------------------
+  |
+  | Registers a new user using name, email, and password credentials.
+  |
+  | This endpoint is publicly accessible and intended for
+  | initial user onboarding flows.
+  |
+  */
+  @UseGuards(AnonymousGuard)
+  @Post('register')
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   /*

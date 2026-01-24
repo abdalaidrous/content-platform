@@ -67,7 +67,7 @@ export class UsersService extends BaseCrudService<
   */
   constructor(
     @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    public readonly userRepo: Repository<User>,
     private readonly i18n: I18nService,
   ) {
     super(userRepo);

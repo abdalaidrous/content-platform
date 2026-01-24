@@ -83,6 +83,18 @@ export class User extends BaseEntity {
 
   /*
   |--------------------------------------------------------------------------
+  | verifyPassword
+  |--------------------------------------------------------------------------
+  |
+  | Compares a plain password with the stored hashed password.
+  |
+  */
+  async verifyPassword(plainPassword: string): Promise<boolean> {
+    return bcrypt.compare(plainPassword, this.password);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | setPassword
   |--------------------------------------------------------------------------
   |

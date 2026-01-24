@@ -1,3 +1,4 @@
 {
-  "USER_ALREADY_EXISTS": "User already exists"
+  "USER_ALREADY_EXISTS": "User already exists",
+  "INVALID_CREDENTIALS": "Invalid credentials"
 }

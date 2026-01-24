@@ -1,3 +1,4 @@
 {
-  "USER_ALREADY_EXISTS": "المستخدم موجود بالفعل"
+  "USER_ALREADY_EXISTS": "المستخدم موجود بالفعل",
+  "INVALID_CREDENTIALS": "بيانات الدخول غير صحيحة"
 }

@@ -10,5 +10,6 @@
 export const MESSAGES = {
   ERRORS: {
     USER_ALREADY_EXISTS: 'errors.USER_ALREADY_EXISTS',
+    INVALID_CREDENTIALS: 'errors.INVALID_CREDENTIALS',
   },
 } as const;

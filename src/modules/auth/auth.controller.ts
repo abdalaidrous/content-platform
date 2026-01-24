@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Patch } from '@nestjs/common';
 
 import { LoginDto } from './dto/login.dto';
 import { AnonymousGuard } from '@/common/guards/anonymous.guard';
@@ -12,6 +12,7 @@ import { ChangePasswordDto } from '@/modules/auth/dto/change-password.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { SuccessResponse } from '@/common/interfaces/success-response.interface';
 import { RegisterDto } from '@/modules/auth/dto/register.dto';
+import { UpdateCurrentUserDto } from '@/modules/auth/dto/update-current-user.dto';
 
 /*
 |--------------------------------------------------------------------------
@@ -87,6 +88,27 @@ export class AuthController {
   @Get('profile')
   getMe(@CurrentUser() user: AuthUser) {
     return user;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | updateCurrentUser
+  |--------------------------------------------------------------------------
+  |
+  | Updates the currently authenticated user's profile data.
+  |
+  | - Requires authentication.
+  | - Does not allow role or password updates.
+  | - Returns an updated authentication payload.
+  |
+  */
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateCurrentUser(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateCurrentUserDto,
+  ) {
+    return this.authService.updateCurrentUser(user, dto);
   }
 
   /*

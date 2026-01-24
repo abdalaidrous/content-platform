@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
+import {
+  FindOptionsRelations,
+  FindOptionsWhere,
+  IsNull,
+  Not,
+  Repository,
+} from 'typeorm';
 import { I18nService } from 'nestjs-i18n';
 
 import { User } from './entities/user.entity';
@@ -12,6 +18,7 @@ import { BaseCrudService } from '@/common/services/base-crud.service';
 import { PaginateConfig } from 'nestjs-paginate';
 import { CreateUserInput } from '@/modules/users/interfaces/create-user-input.interface';
 import { Profile } from '@/modules/users/entities/profile.entity';
+import { UpdateUserInput } from '@/modules/users/interfaces/update-user-input.interface';
 
 /*
 |--------------------------------------------------------------------------
@@ -90,12 +97,17 @@ export class UsersService extends BaseCrudService<
   |   (e.g. active users, non-deleted users).
   |
   */
-  async findById(id: string, filters?: FindOptionsWhere<User>): Promise<User> {
+  async findById(
+    id: string,
+    filters?: FindOptionsWhere<User>,
+    relations?: FindOptionsRelations<User>,
+  ): Promise<User> {
     const user = await this.userRepo.findOne({
       where: {
         id,
         ...filters,
       },
+      relations,
     });
 
     if (!user) {
@@ -121,12 +133,14 @@ export class UsersService extends BaseCrudService<
   async findUserByEmail(
     email: string,
     filters?: FindOptionsWhere<User>,
+    relations?: FindOptionsRelations<User>,
   ): Promise<User | null> {
     return this.userRepo.findOne({
       where: {
         email,
         ...filters,
       },
+      relations,
     });
   }
 
@@ -139,7 +153,11 @@ export class UsersService extends BaseCrudService<
   |
   */
   async findActiveUserByEmail(email: string): Promise<User | null> {
-    return this.findUserByEmail(email, { isActive: true, deletedAt: IsNull() });
+    return this.findUserByEmail(
+      email,
+      { isActive: true, deletedAt: IsNull() },
+      { profile: true },
+    );
   }
 
   /*
@@ -252,5 +270,94 @@ export class UsersService extends BaseCrudService<
   */
   async createViewer(dto: CreateUserInput): Promise<User> {
     return this.create({ ...dto, role: UserRole.VIEWER });
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | updateUser
+  |--------------------------------------------------------------------------
+  |
+  | Updates an existing user and its related profile data.
+  |
+  | - Ensures the user exists.
+  | - Prevents email duplication across users.
+  | - Supports partial updates.
+  | - Safely updates the related Profile entity.
+  |
+  */
+  async update(id: string, dto: UpdateUserInput): Promise<User> {
+    /*
+    |----------------------------------------------------------------------
+    | Retrieve User
+    |----------------------------------------------------------------------
+    |
+    | Ensures the user exists before attempting any update.
+    |
+    */
+    const user = await this.findById(
+      id,
+      {},
+      {
+        profile: true,
+      },
+    );
+
+    /*
+    |----------------------------------------------------------------------
+    | Email Uniqueness Validation
+    |----------------------------------------------------------------------
+    |
+    | Prevents assigning an email that is already used by another user.
+    |
+    */
+    if (dto.email && dto.email !== user.email) {
+      const emailExists = await this.userRepo.findOne({
+        where: {
+          email: dto.email,
+          id: Not(id),
+        },
+      });
+
+      if (emailExists) {
+        throw new BadRequestException(
+          this.i18n.t(MESSAGES.ERRORS.USER_ALREADY_EXISTS),
+        );
+      }
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | Profile Update
+    |----------------------------------------------------------------------
+    |
+    | Updates profile data if provided in the payload.
+    |
+    */
+    if (dto.profile) {
+      user.profile = this.profileRepo.merge(
+        user.profile ?? this.profileRepo.create(),
+        dto.profile,
+      );
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | User Update
+    |----------------------------------------------------------------------
+    |
+    | Applies partial updates to the user entity.
+    |
+    */
+    this.userRepo.merge(user, dto);
+
+    /*
+    |----------------------------------------------------------------------
+    | Persistence
+    |----------------------------------------------------------------------
+    |
+    | Saves and returns the updated user entity.
+    |
+    */
+    return this.userRepo.save(user);
   }
 }

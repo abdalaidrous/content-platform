@@ -92,6 +92,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   |   sub: number;        // User ID
   |   email: string;     // User email
   |   role: UserRole[];  // Assigned user roles
+  |   profile: profile;  // Assigned user profile
   | }
   |
   | IMPORTANT:

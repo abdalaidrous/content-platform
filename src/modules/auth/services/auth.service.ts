@@ -6,6 +6,8 @@ import { LoginResponse } from '@/modules/auth/interfaces/login-response.interfac
 import { TokenService } from '@/modules/auth/services/token.service';
 import { UsersService } from '@/modules/users/users.service';
 import { RegisterDto } from '@/modules/auth/dto/register.dto';
+import { UpdateCurrentUserDto } from '@/modules/auth/dto/update-current-user.dto';
+import { AuthUser } from '@/common/interfaces/auth-user.interface';
 
 /*
 |--------------------------------------------------------------------------
@@ -117,5 +119,42 @@ export class AuthService {
   async register(dto: RegisterDto): Promise<LoginResponse> {
     const user = await this.usersService.createViewer(dto);
     return this.buildAuthResponse(user);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | updateCurrentUser
+  |--------------------------------------------------------------------------
+  |
+  | Updates the currently authenticated user's profile data.
+  |
+  | - Uses the authenticated user context (JWT payload).
+  | - Delegates update logic to UsersService.
+  | - Returns a refreshed authentication response.
+  |
+  */
+  async updateCurrentUser(
+    authUser: AuthUser,
+    dto: UpdateCurrentUserDto,
+  ): Promise<LoginResponse> {
+    /*
+    |----------------------------------------------------------------------
+    | Update User
+    |----------------------------------------------------------------------
+    |
+    | Applies updates to the currently authenticated user.
+    |
+    */
+    const updatedUser = await this.usersService.update(authUser.id, dto);
+
+    /*
+    |----------------------------------------------------------------------
+    | Return Updated Auth Payload
+    |----------------------------------------------------------------------
+    |
+    | Rebuilds the authentication response to reflect updated data.
+    |
+    */
+    return this.buildAuthResponse(updatedUser);
   }
 }

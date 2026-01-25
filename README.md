@@ -22,9 +22,11 @@ The system is composed of two main components:
   Internal APIs used by editors and administrators to create, manage, and publish content.
 
 - **Discovery System**  
-  Public-facing APIs allowing users to browse, search, and discover published content.
+  Public-facing APIs consumed by frontend applications to browse, search,
+  and discover published content.
 
-The architecture focuses on **scalability**, **low coupling**, and **future extensibility**.
+The architecture focuses on **scalability**, **low coupling**, and
+**future extensibility**, while remaining simple and maintainable.
 
 ---
 
@@ -52,7 +54,7 @@ src/
 │  ├─ programs      # Programs (podcasts / documentaries)  
 │  ├─ episodes      # Episodes under programs  
 │  ├─ categories    # Content categorization  
-│  └─ imports       # (Future) external content imports  
+│  └─ imports       # External content imports (CMS only)  
 │  
 ├─ common/           # Guards, decorators, base utilities  
 ├─ shared/           # Shared DTOs & interfaces  
@@ -70,7 +72,10 @@ implementation of other modules.
 
 ## Content Management System (CMS)
 
-The CMS allows internal users (editors, admins) to:
+The CMS is an **internal system** used by editors and administrators to
+manage audiovisual content.
+
+It allows internal users to:
 
 - Create and update programs (podcasts, documentaries, etc.)
 - Manage episodes under each program
@@ -85,23 +90,73 @@ The CMS allows internal users (editors, admins) to:
 
 All CMS endpoints are protected using authentication and role-based guards.
 
+### CMS API Responsibilities
+
+CMS APIs are designed for **internal usage only** and are consumed by
+editors and administrators.
+
+These APIs are responsible for:
+- Creating and updating programs and episodes
+- Managing content metadata
+- Controlling publication status
+- Managing categories and relationships
+- Triggering content import operations
+
+CMS endpoints are:
+- Authenticated using JWT
+- Authorized using role-based access control (Admin / Editor)
+
+CMS APIs are **write-heavy** and optimized for data integrity,
+validation, and correctness rather than high traffic.
+
 ---
 
 ## Discovery System
 
-The Discovery system exposes **read-only APIs** for public users, including:
+The Discovery system represents the **public-facing API layer** consumed
+by frontend applications (web and mobile).
+
+It exposes **read-only APIs** for public users, including:
 
 - Listing programs
 - Viewing program details
 - Browsing episodes
 - Searching content using filters and keywords
 
-Only **published content** is exposed through the Discovery APIs.
+Only **published content** is exposed through Discovery APIs.
 
-This separation ensures:
-- Safe public access
-- Optimized read operations
-- Clear responsibility boundaries
+### Discovery API Responsibilities
+
+Discovery APIs are responsible for:
+- Browsing published programs
+- Viewing program and episode details
+- Searching and filtering content
+- Supporting pagination for large datasets
+
+Discovery APIs are:
+- Public
+- Read-only
+- Do not require authentication
+- Strictly limited to published content
+
+This ensures frontend clients can safely consume content
+without any exposure to CMS or administrative logic.
+
+### Discovery Design Decision
+
+Although Discovery is described as a separate system conceptually,
+it is implemented within the same backend application.
+
+The separation between CMS and Discovery is enforced logically through:
+- Read-only endpoints
+- Strict role-based access control
+- Query-level filtering of published content
+
+This approach keeps the architecture simple while preserving a clear
+boundary between content management and content discovery.
+
+If traffic or product requirements grow, the Discovery layer can be
+extracted into a standalone service without impacting CMS logic.
 
 ---
 
@@ -111,41 +166,42 @@ The current implementation relies on PostgreSQL with indexed columns and
 paginated queries.
 
 The architecture supports future improvements such as:
-
 - PostgreSQL Full-Text Search using `tsvector` and GIN indexes
 - Dedicated search engines (e.g., Elasticsearch)
 - Read-optimized denormalized views for high-traffic endpoints
 
 ---
 
-## Importing External Content (Future Extension)
+## Importing External Content (CMS Extension)
 
-The system is designed to support importing content from external sources such as:
-
+The system supports importing content from external sources such as:
 - YouTube
 - RSS feeds
 - CSV files
 - External APIs
 
-A dedicated `imports` module can be introduced to:
+Importing content is considered part of the **CMS domain** and is not
+exposed through Discovery APIs.
 
-- Track import jobs
-- Normalize external content into internal models
-- Process imports asynchronously using background jobs
+A dedicated `imports` module is responsible for:
+- Creating and tracking import jobs
+- Normalizing external data into internal content models
+- Processing imports asynchronously using background jobs
 
-This design prevents tight coupling between CMS logic and external integrations.
+Imported content becomes visible to Discovery APIs only
+after successful processing and publication.
 
 ---
 
 ## Scalability Considerations
 
-The system is designed to scale up to **millions of users per hour** through:
+The system is designed to scale up to **millions of users per hour** by:
 
-- Clear separation of read and write operations
-- Pagination on all list endpoints
-- Proper database indexing
-- Ability to add:
-    - Caching (Redis)
+- Separating read and write concerns
+- Applying pagination to all list endpoints
+- Using proper database indexing
+- Allowing future introduction of:
+    - Caching layers (Redis)
     - Read replicas
     - CDN for media delivery
     - Rate limiting for public APIs
@@ -160,6 +216,18 @@ Key principles applied:
 - **Open/Closed:** Modules are extendable without modification
 - **Dependency Inversion:** Controllers depend on services, not implementations
 - **Low Coupling:** Shared logic lives in `common` and `shared` layers
+
+---
+
+## CMS vs Discovery Overview
+
+| Aspect            | CMS                          | Discovery                    |
+|-------------------|------------------------------|------------------------------|
+| Audience          | Editors / Admins             | Public users (Frontend)      |
+| Access            | Authenticated & Authorized   | Public (Read-only)           |
+| Operations        | Create / Update / Publish    | Browse / Search / View       |
+| Traffic Profile   | Low to medium                | High (Millions/hour)         |
+| Optimization Goal | Data integrity & validation  | Performance & scalability   |
 
 ---
 
@@ -210,9 +278,11 @@ npm run test:cov
 ## Conclusion
 
 This project prioritizes clarity, scalability, and maintainability over
-over-engineering.  
-The architecture is intentionally designed to evolve with future requirements
-while maintaining clean boundaries and low coupling.
+over-engineering.
+
+The system clearly separates **content management concerns** from
+**content discovery concerns**, while keeping the implementation simple
+and adaptable for future growth.
 
 ---
 

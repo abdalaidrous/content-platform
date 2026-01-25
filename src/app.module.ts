@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ProgramsModule } from './modules/programs/programs.module';
 import { EpisodesModule } from './modules/episodes/episodes.module';
+import { ImportsModule } from './modules/imports/imports.module';
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +27,14 @@ import { EpisodesModule } from './modules/episodes/episodes.module';
 |
 */
 @Module({
-  imports: [CoreModule, UsersModule, AuthModule, CategoriesModule, ProgramsModule, EpisodesModule],
+  imports: [
+    CoreModule,
+    UsersModule,
+    AuthModule,
+    CategoriesModule,
+    ProgramsModule,
+    EpisodesModule,
+    ImportsModule,
+  ],
 })
 export class AppModule {}

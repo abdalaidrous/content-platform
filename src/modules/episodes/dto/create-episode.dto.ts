@@ -1,42 +1,28 @@
 import {
-  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
-  MaxLength,
+  IsInt,
+  Min,
+  IsUrl,
 } from 'class-validator';
-import { ProgramType } from '@/modules/programs/enums/program-type.enum';
+import { EpisodeStatus } from '@/modules/episodes/enums/episode-status.enum';
+import { EpisodeLanguage } from '@/modules/episodes/enums/episode-language.enum';
 
 /*
 |--------------------------------------------------------------------------
-| CreateProgramDto
+| CreateEpisodeDto
 |--------------------------------------------------------------------------
 |
-| Defines the payload required to create a new program.
+| Defines the payload required to create a new episode.
 |
-| This DTO supports multilingual fields (Arabic & English)
-| using a Django-like model translation approach.
-|
-| Fields:
-| - type                    : Program type (podcast | documentary).
-| - categoryId              : Associated category identifier.
-| - titleAr / titleEn       : Localized titles.
-| - descriptionAr / descriptionEn : Optional localized descriptions.
-| - isActive                : Visibility flag.
+| This DTO validates the structure and format of episode data
+| coming from the CMS layer.
 |
 */
-export class CreateProgramDto {
-  /*
-  |--------------------------------------------------------------------------
-  | Type
-  |--------------------------------------------------------------------------
-  */
-
-  @IsEnum(ProgramType)
-  type: ProgramType;
-
+export class CreateEpisodeDto {
   /*
   |--------------------------------------------------------------------------
   | Relations
@@ -44,33 +30,31 @@ export class CreateProgramDto {
   */
 
   @IsUUID()
-  category: string;
+  program: string;
 
   /*
   |--------------------------------------------------------------------------
-  | Arabic fields
+  | Titles
   |--------------------------------------------------------------------------
   */
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
   titleAr: string;
+
+  @IsString()
+  @IsNotEmpty()
+  titleEn: string;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Descriptions
+  |--------------------------------------------------------------------------
+  */
 
   @IsOptional()
   @IsString()
   descriptionAr?: string;
-
-  /*
-  |--------------------------------------------------------------------------
-  | English fields
-  |--------------------------------------------------------------------------
-  */
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  titleEn: string;
 
   @IsOptional()
   @IsString()
@@ -78,11 +62,30 @@ export class CreateProgramDto {
 
   /*
   |--------------------------------------------------------------------------
-  | Status
+  | Media
   |--------------------------------------------------------------------------
   */
 
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl({ require_protocol: true })
+  mediaUrl: string;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Metadata
+  |--------------------------------------------------------------------------
+  */
+
+  @IsEnum(EpisodeLanguage)
+  language: EpisodeLanguage;
+
   @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
+  @IsEnum(EpisodeStatus)
+  status?: EpisodeStatus;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  duration?: number;
 }

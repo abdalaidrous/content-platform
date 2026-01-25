@@ -40,5 +40,5 @@ export class Program extends BaseEntity {
 
   @ManyToOne(() => Category, { nullable: false })
   @JoinColumn({ name: 'category_id' })
-  categoryId: Category;
+  category: Category;
 }

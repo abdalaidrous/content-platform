@@ -4,6 +4,7 @@ import { CoreModule } from '@/core/core.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ProgramsModule } from './modules/programs/programs.module';
+import { EpisodesModule } from './modules/episodes/episodes.module';
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,6 @@ import { ProgramsModule } from './modules/programs/programs.module';
 |
 */
 @Module({
-  imports: [CoreModule, UsersModule, AuthModule, CategoriesModule, ProgramsModule],
+  imports: [CoreModule, UsersModule, AuthModule, CategoriesModule, ProgramsModule, EpisodesModule],
 })
 export class AppModule {}

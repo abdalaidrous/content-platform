@@ -52,7 +52,7 @@ export class ProgramsService extends BaseCrudService<
         createdAt: true,
       },
       defaultSortBy: [['createdAt', 'DESC']],
-      relations: ['categoryId'],
+      relations: ['category'],
     };
   }
 
@@ -85,7 +85,7 @@ export class ProgramsService extends BaseCrudService<
  |
  */
   private async validateCategory(categoryId: string): Promise<void> {
-    const exists = await this.categoryRepo.exist({
+    const exists = await this.categoryRepo.findOne({
       where: {
         id: categoryId,
         isActive: true,
@@ -112,7 +112,7 @@ export class ProgramsService extends BaseCrudService<
   |
   */
   async create(dto: CreateProgramDto): Promise<Program> {
-    await this.validateCategory(dto.categoryId);
+    await this.validateCategory(dto.category);
     return super.create(dto);
   }
 
@@ -129,8 +129,8 @@ export class ProgramsService extends BaseCrudService<
   |
   */
   async update(id: string, dto: UpdateProgramDto): Promise<Program> {
-    if (dto.categoryId) {
-      await this.validateCategory(dto.categoryId);
+    if (dto.category) {
+      await this.validateCategory(dto.category);
     }
 
     return super.update(id, dto);

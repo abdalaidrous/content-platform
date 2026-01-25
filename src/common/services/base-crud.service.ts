@@ -46,6 +46,24 @@ export abstract class BaseCrudService<
 
   /*
   |--------------------------------------------------------------------------
+  | beforeCreate
+  |--------------------------------------------------------------------------
+  |
+  | Lifecycle hook executed before creating a new entity.
+  |
+  | Allows extending services to:
+  | - Validate input data
+  | - Enforce domain rules
+  | - Prepare or transform creation payload
+  |
+  | This hook receives only the creation DTO since
+  | the entity instance does not exist yet.
+  |
+  */
+  protected beforeCreate(_dto: CreateDto): void {}
+
+  /*
+  |--------------------------------------------------------------------------
   | create
   |--------------------------------------------------------------------------
   |
@@ -59,6 +77,7 @@ export abstract class BaseCrudService<
   |
   */
   async create(dto: CreateDto): Promise<Entity> {
+    this.beforeCreate(dto);
     const entity = this.repository.create(dto as DeepPartial<Entity>);
     return this.repository.save(entity);
   }
@@ -102,6 +121,24 @@ export abstract class BaseCrudService<
 
   /*
   |--------------------------------------------------------------------------
+  | beforeUpdate
+  |--------------------------------------------------------------------------
+  |
+  | Lifecycle hook executed before updating an existing entity.
+  |
+  | Allows extending services to:
+  | - Apply domain-specific state transitions
+  | - Validate update constraints
+  | - Mutate the entity instance safely
+  |
+  | This hook receives both the update DTO and the
+  | currently persisted entity instance.
+  |
+  */
+  protected beforeUpdate(_dto: UpdateDto, _entity: Entity): void {}
+
+  /*
+  |--------------------------------------------------------------------------
   | update
   |--------------------------------------------------------------------------
   |
@@ -113,9 +150,28 @@ export abstract class BaseCrudService<
   */
   async update(id: Entity['id'], dto: UpdateDto): Promise<Entity> {
     const entity = await this.findOne(id);
+    this.beforeUpdate(dto, entity);
     Object.assign(entity, dto);
     return this.repository.save(entity);
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | beforeDelete
+  |--------------------------------------------------------------------------
+  |
+  | Lifecycle hook executed before deleting an entity.
+  |
+  | Allows extending services to:
+  | - Prevent deletion based on domain rules
+  | - Trigger side effects (e.g. cleanup, audit)
+  | - Enforce referential or business constraints
+  |
+  | This hook receives the entity instance
+  | that is about to be removed.
+  |
+  */
+  protected beforeDelete(_entity: Entity): void {}
 
   /*
   |--------------------------------------------------------------------------
@@ -129,6 +185,7 @@ export abstract class BaseCrudService<
   */
   async remove(id: Entity['id']): Promise<void> {
     const entity = await this.findOne(id);
+    this.beforeDelete(entity);
     await this.repository.remove(entity);
   }
 }

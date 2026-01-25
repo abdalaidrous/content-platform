@@ -30,15 +30,56 @@ import { I18nValidationFilter } from '@/common/filters/i18n-validation.filter';
 |
 */
 async function bootstrap() {
+  /*
+  |--------------------------------------------------------------------------
+  | app
+  |--------------------------------------------------------------------------
+  |
+  | The root NestJS application instance.
+  | Uses Fastify as the underlying HTTP server adapter.
+  |
+  */
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
   );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Global API prefix
+  |--------------------------------------------------------------------------
+  |
+  | Sets a common URL prefix for all HTTP routes.
+  | Example: /api/v1/...
+  |
+  */
   app.setGlobalPrefix('api');
+
+  /*
+  |--------------------------------------------------------------------------
+  | API versioning
+  |--------------------------------------------------------------------------
+  |
+  | Enables URI-based versioning for all controllers.
+  | Example: /v1/resource
+  |
+  */
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
   });
+
+  /*
+  |--------------------------------------------------------------------------
+  | Global validation pipe
+  |--------------------------------------------------------------------------
+  |
+  | Automatically validates and transforms incoming request payloads.
+  | - whitelist              : strips unknown properties
+  | - transform              : transforms payloads to DTO instances
+  | - forbidNonWhitelisted   : throws error for unknown properties
+  |
+  */
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -46,7 +87,28 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Global exception filters
+  |--------------------------------------------------------------------------
+  |
+  | Registers the i18n-aware validation filter globally
+  | to format validation errors with localized messages.
+  |
+  */
   app.useGlobalFilters(app.get(I18nValidationFilter));
+
+  /*
+  |--------------------------------------------------------------------------
+  | Application Startup Invocation
+  |--------------------------------------------------------------------------
+  |
+  | Invokes the bootstrap function.
+  | The `void` operator is used to explicitly ignore the returned Promise
+  | while satisfying strict linting rules.
+  |
+  */
   await app.listen(process.env.PORT ?? 3000);
 }
 

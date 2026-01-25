@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-platform-api-vnext
+  namespace: content-platform-vnext
+  labels:
+    app: content-platform-api-vnext
+spec:
+  selector:
+    matchLabels:
+      app: content-platform-api-vnext
+  template:
+    metadata:
+      labels:
+        app: content-platform-api-vnext
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+      - name: content-platform-api-vnext
+        image: ghcr.io/abdalaidrous/content-platform-api:latest
+        
+        envFrom:
+        - secretRef:
+              name: content-platform-secrets
+        imagePullPolicy: Always
+
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+            
+        readinessProbe:
+          tcpSocket:
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+
+        ports:
+        - containerPort: 3000
+        - containerPort: 3002
+      serviceAccountName: default

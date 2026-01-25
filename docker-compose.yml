@@ -1,0 +1,148 @@
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: content-platform-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: content-platform_db
+      POSTGRES_USER: content-platform_user
+      POSTGRES_PASSWORD: content-platform_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - content-platform-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U content-platform_user -d content-platform_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: content-platform-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass content-platform_redis_password
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - content-platform-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Redis Commander (Optional - Web UI for Redis)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: content-platform-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:content-platform_redis_password
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - content-platform-network
+
+  # pgAdmin (Optional - Web UI for PostgreSQL)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: content-platform-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@content-platform.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - content-platform-network
+
+  # content-platform Chat API Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: content-platform-app
+    restart: always
+    ports:
+      - "3001:3000"  # HTTP API
+      - "3002:3002"  # WebSocket Gateway
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3000
+      - INSTANCE_ID=${INSTANCE_ID:-chat-instance-1}
+      # Database
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_DATABASE=${DB_DATABASE:-content-platform_db}
+      - DB_USERNAME=${DB_USERNAME:-content-platform_user}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SYNC=${DB_SYNC:-false}
+      - DB_LOGGING=${DB_LOGGING:-true}
+      - DB_RUN_MIGRATIONS=${DB_RUN_MIGRATIONS:-true}
+      # Redis
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-content-platform_redis_password}
+      - REDIS_DB=${REDIS_DB:-0}
+      # Storage
+      - STORAGE_TYPE=${STORAGE_TYPE:-local}
+      - LOCAL_STORAGE_PATH=${LOCAL_STORAGE_PATH:-uploads}
+      - LOCAL_STORAGE_URL=${LOCAL_STORAGE_URL:-http://localhost:3001/uploads}
+      # Health Check Configuration
+      - HEALTH_ENDPOINT=/health
+      - HEALTH_TIMEOUT=10000
+      - HEALTH_MAX_RETRIES=3
+    volumes:
+      - ./uploads:/app/uploads
+      - ./.env:/app/.env:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - content-platform-network
+    healthcheck:
+      test: ["CMD", "node", "health-check-enhanced.js"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  content-platform-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.90.0/24

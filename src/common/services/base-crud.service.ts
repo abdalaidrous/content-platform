@@ -166,6 +166,29 @@ export abstract class BaseCrudService<
 
   /*
   |--------------------------------------------------------------------------
+  | exists
+  |--------------------------------------------------------------------------
+  |
+  | Checks whether an entity exists based on the given filter
+  | after applying visibility constraints.
+  |
+  | This method is optimized for existence checks and does
+  | not load the full entity from the database.
+  |
+  */
+  async exists(where: FindOptionsWhere<Entity>): Promise<boolean> {
+    const filteredWhere = this.applyVisibilityFilter(where);
+
+    const count = await this.repository.count({
+      where: filteredWhere,
+      take: 1,
+    });
+
+    return count > 0;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | beforeUpdate
   |--------------------------------------------------------------------------
   |

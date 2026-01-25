@@ -8,10 +8,10 @@ import { Episode } from './entities/episode.entity';
 import { CreateEpisodeDto } from './dto/create-episode.dto';
 import { UpdateEpisodeDto } from './dto/update-episode.dto';
 import { BaseCrudService } from '@/common/services/base-crud.service';
-import { Program } from '@/modules/programs/entities/program.entity';
 import { MESSAGES } from '@/common/constants/messages';
 import { EpisodeStatus } from '@/modules/episodes/enums/episode-status.enum';
 import { UserContextService } from '@/common/services/user-context.service';
+import { ProgramsService } from '@/modules/programs/programs.service';
 
 /*
 |--------------------------------------------------------------------------
@@ -69,8 +69,7 @@ export class EpisodesService extends BaseCrudService<
   constructor(
     @InjectRepository(Episode)
     private readonly episodeRepo: Repository<Episode>,
-    @InjectRepository(Program)
-    private readonly programRepo: Repository<Program>,
+    private readonly programsService: ProgramsService,
     private readonly userContext: UserContextService,
     private readonly i18n: I18nService,
   ) {
@@ -112,12 +111,10 @@ export class EpisodesService extends BaseCrudService<
   |
   */
   private async validateProgram(programId: string): Promise<void> {
-    const exists = await this.programRepo.findOne({
-      where: {
-        id: programId,
-        isActive: true,
-        deletedAt: IsNull(),
-      },
+    const exists = await this.programsService.exists({
+      id: programId,
+      isActive: true,
+      deletedAt: IsNull(),
     });
 
     if (!exists) {

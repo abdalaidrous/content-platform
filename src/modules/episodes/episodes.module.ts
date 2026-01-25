@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EpisodesService } from './episodes.service';
 import { EpisodesController } from './episodes.controller';
 import { Episode } from './entities/episode.entity';
-import { Program } from '@/modules/programs/entities/program.entity';
+import { ProgramsModule } from '@/modules/programs/programs.module';
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +18,7 @@ import { Program } from '@/modules/programs/entities/program.entity';
 |
 */
 @Module({
-  imports: [TypeOrmModule.forFeature([Episode, Program])],
+  imports: [TypeOrmModule.forFeature([Episode]), ProgramsModule],
   providers: [EpisodesService],
   controllers: [EpisodesController],
   exports: [EpisodesService],

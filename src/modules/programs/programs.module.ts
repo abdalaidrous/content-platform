@@ -4,7 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProgramsService } from './programs.service';
 import { ProgramsController } from './programs.controller';
 import { Program } from './entities/program.entity';
-import { Category } from '@/modules/categories/entities/category.entity';
+import { CategoriesModule } from '@/modules/categories/categories.module';
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +18,7 @@ import { Category } from '@/modules/categories/entities/category.entity';
 |
 */
 @Module({
-  imports: [TypeOrmModule.forFeature([Program, Category])],
+  imports: [TypeOrmModule.forFeature([Program]), CategoriesModule],
   providers: [ProgramsService],
   controllers: [ProgramsController],
   exports: [ProgramsService],

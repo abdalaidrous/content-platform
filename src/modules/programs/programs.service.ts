@@ -8,9 +8,9 @@ import { Program } from './entities/program.entity';
 import { CreateProgramDto } from './dto/create-program.dto';
 import { UpdateProgramDto } from './dto/update-program.dto';
 import { BaseCrudService } from '@/common/services/base-crud.service';
-import { Category } from '@/modules/categories/entities/category.entity';
 import { MESSAGES } from '@/common/constants/messages';
 import { UserContextService } from '@/common/services/user-context.service';
+import { CategoriesService } from '@/modules/categories/categories.service';
 
 /*
 |--------------------------------------------------------------------------
@@ -69,8 +69,7 @@ export class ProgramsService extends BaseCrudService<
   constructor(
     @InjectRepository(Program)
     private readonly programRepo: Repository<Program>,
-    @InjectRepository(Category)
-    private readonly categoryRepo: Repository<Category>,
+    private readonly categoriesService: CategoriesService,
     private readonly userContext: UserContextService,
     private readonly i18n: I18nService,
   ) {
@@ -112,12 +111,10 @@ export class ProgramsService extends BaseCrudService<
  |
  */
   private async validateCategory(categoryId: string): Promise<void> {
-    const exists = await this.categoryRepo.findOne({
-      where: {
-        id: categoryId,
-        isActive: true,
-        deletedAt: IsNull(),
-      },
+    const exists = await this.categoriesService.exists({
+      id: categoryId,
+      isActive: true,
+      deletedAt: IsNull(),
     });
 
     if (!exists) {

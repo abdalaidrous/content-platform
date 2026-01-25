@@ -10,6 +10,9 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Role } from '@/common/enums/role.enum';
+import { PublicRead } from '@/common/decorators/public-read.decorator';
+import { SerializeByRole } from '@/common/decorators/serialize-by-role.decorator';
+import { CategoryResponseDto } from '@/modules/categories/dto/category.response.dto';
 
 /*
 |--------------------------------------------------------------------------
@@ -30,8 +33,10 @@ import { Role } from '@/common/enums/role.enum';
 | - Restricted to ADMIN and EDITOR roles (CMS usage)
 |
 */
+@PublicRead()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN, Role.EDITOR)
+@SerializeByRole(CategoryResponseDto)
 @Controller('categories')
 export class CategoriesController extends CrudControllerFactory<
   Category,

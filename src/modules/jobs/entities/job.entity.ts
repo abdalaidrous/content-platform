@@ -1,41 +1,53 @@
 import { Entity, Column } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
-import { ImportJobStatus } from '@/modules/imports/enums/import-job-status.enum';
-import { ImportSource } from '@/modules/imports/enums/import-source.enum';
 
 /*
 |--------------------------------------------------------------------------
-| ImportJob
+| Job
 |--------------------------------------------------------------------------
 |
-| Represents a content import job from an external source.
-| This entity tracks the lifecycle of an import operation
-| and is persisted in the database for monitoring and retries.
+| Represents a background job executed asynchronously.
+|
+| This entity is used to track long-running or non-blocking operations
+| such as imports, search indexing, and email notifications.
+|
+| It acts as a persistence layer for job state, allowing monitoring,
+| retries, and failure handling without coupling the system to
+| a specific queue implementation.
 |
 */
-@Entity('import_jobs')
-export class ImportJob extends BaseEntity {
+@Entity('jobs')
+export class Job extends BaseEntity {
   /*
   |--------------------------------------------------------------------------
-  | source
+  | type
   |--------------------------------------------------------------------------
   |
-  | External source from which the content will be imported.
+  | Logical job type (e.g. import, search_index, email).
   |
   */
-  @Column({
-    type: 'enum',
-    enum: ImportSource,
-  })
-  source: ImportSource;
+  @Column()
+  type: string;
+
+  /*
+  |--------------------------------------------------------------------------
+  | status
+  |--------------------------------------------------------------------------
+  |
+  | Current execution status of the job.
+  | (e.g. pending, processing, completed, failed)
+  |
+  */
+  @Column()
+  status: string;
 
   /*
   |--------------------------------------------------------------------------
   | payload
   |--------------------------------------------------------------------------
   |
-  | Raw payload required to fetch and normalize external content.
-  | Stored as JSON to support flexible source-specific structures.
+  | Arbitrary data required to execute the job.
+  | Stored as JSON to support multiple job types.
   |
   */
   @Column({ type: 'jsonb' })
@@ -43,25 +55,10 @@ export class ImportJob extends BaseEntity {
 
   /*
   |--------------------------------------------------------------------------
-  | status
-  |--------------------------------------------------------------------------
-  |
-  | Current lifecycle status of the import job.
-  |
-  */
-  @Column({
-    type: 'enum',
-    enum: ImportJobStatus,
-    default: ImportJobStatus.PENDING,
-  })
-  status: ImportJobStatus;
-
-  /*
-  |--------------------------------------------------------------------------
   | error
   |--------------------------------------------------------------------------
   |
-  | Error message in case the import job fails.
+  | Error message in case the job fails.
   |
   */
   @Column({ type: 'text', nullable: true })
@@ -72,7 +69,7 @@ export class ImportJob extends BaseEntity {
   | processedAt
   |--------------------------------------------------------------------------
   |
-  | Timestamp when the import job was processed.
+  | Timestamp when the job was processed.
   |
   */
   @Column({ type: 'timestamp', nullable: true })

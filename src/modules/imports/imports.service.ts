@@ -1,111 +1,100 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
 import { CreateImportJobDto } from './dto/create-import-job.dto';
 import { ImportJob } from './entities/import-job.entity';
 import { ImportJobStatus } from './enums/import-job-status.enum';
 
 /*
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 | ImportsService
-|---------------------------------------------------------------------------
+|--------------------------------------------------------------------------
 |
-| Handles the lifecycle of content import jobs.
+| Handles the lifecycle and persistence of content import jobs.
+|
+| This service manages valid state transitions while ensuring
+| import jobs are consistently stored and tracked in the database.
 |
 */
-
 @Injectable()
 export class ImportsService {
+  constructor(
+    @InjectRepository(ImportJob)
+    private readonly importJobRepository: Repository<ImportJob>,
+  ) {}
+
   /*
-  |-----------------------------------------------------------------------
-  | Create Import Job (Domain Level)
-  |-----------------------------------------------------------------------
+  |--------------------------------------------------------------------------
+  | createImportJob
+  |--------------------------------------------------------------------------
   |
-  | This method prepares an import job without coupling
-  | the domain logic to a specific storage or queue.
+  | Creates and persists a new import job in PENDING state.
   |
   */
-  createImportJob(dto: CreateImportJobDto): ImportJob {
-    return {
-      id: crypto.randomUUID(),
+  async createImportJob(dto: CreateImportJobDto): Promise<ImportJob> {
+    const job = this.importJobRepository.create({
       source: dto.source,
       payload: dto.payload,
       status: ImportJobStatus.PENDING,
-      createdAt: new Date(),
-    };
+    });
+
+    return this.importJobRepository.save(job);
   }
 
   /*
-  |---------------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   | markAsProcessing
-  |---------------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   |
-  | Moves the import job from PENDING to PROCESSING state.
-  | This method ensures that only valid state transitions
-  | are allowed during the import lifecycle.
-  |
-  | @throws Error if the job is not in PENDING state.
+  | Transitions the import job to PROCESSING state.
   |
   */
-  markAsProcessing(job: ImportJob): ImportJob {
+  async markAsProcessing(job: ImportJob): Promise<ImportJob> {
     if (job.status !== ImportJobStatus.PENDING) {
       throw new Error('Import job must be pending to start processing.');
     }
 
-    return {
-      ...job,
-      status: ImportJobStatus.PROCESSING,
-    };
+    job.status = ImportJobStatus.PROCESSING;
+    return this.importJobRepository.save(job);
   }
 
   /*
-  |---------------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   | markAsCompleted
-  |---------------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   |
   | Marks the import job as COMPLETED after successful processing.
-  | This method can only be called if the job is currently
-  | in PROCESSING state.
-  |
-  | @throws Error if the job is not in PROCESSING state.
   |
   */
-  markAsCompleted(job: ImportJob): ImportJob {
+  async markAsCompleted(job: ImportJob): Promise<ImportJob> {
     if (job.status !== ImportJobStatus.PROCESSING) {
       throw new Error('Import job must be processing to be completed.');
     }
 
-    return {
-      ...job,
-      status: ImportJobStatus.COMPLETED,
-      processedAt: new Date(),
-    };
+    job.status = ImportJobStatus.COMPLETED;
+    job.processedAt = new Date();
+
+    return this.importJobRepository.save(job);
   }
 
   /*
-  |---------------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   | markAsFailed
-  |---------------------------------------------------------------------------
+  |--------------------------------------------------------------------------
   |
-  | Marks the import job as FAILED when an error occurs
-  | during processing.
-  |
-  | This method prevents completed jobs from being
-  | transitioned into a failed state.
-  |
-  | @param error - Reason for import failure.
-  |
-  | @throws Error if the job is already completed.
+  | Marks the import job as FAILED when processing fails.
   |
   */
-  markAsFailed(job: ImportJob, error: string): ImportJob {
+  async markAsFailed(job: ImportJob, error: string): Promise<ImportJob> {
     if (job.status === ImportJobStatus.COMPLETED) {
       throw new Error('Completed import job cannot be marked as failed.');
     }
 
-    return {
-      ...job,
-      status: ImportJobStatus.FAILED,
-      error,
-      processedAt: new Date(),
-    };
+    job.status = ImportJobStatus.FAILED;
+    job.error = error;
+    job.processedAt = new Date();
+
+    return this.importJobRepository.save(job);
   }
 }

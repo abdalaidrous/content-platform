@@ -7,6 +7,7 @@ import { ProgramsModule } from './modules/programs/programs.module';
 import { EpisodesModule } from './modules/episodes/episodes.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { SearchesModule } from './modules/searches/searches.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +38,7 @@ import { SearchesModule } from './modules/searches/searches.module';
     EpisodesModule,
     ImportsModule,
     SearchesModule,
+    JobsModule,
   ],
 })
 export class AppModule {}

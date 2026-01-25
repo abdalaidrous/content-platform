@@ -1,46 +1,29 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { AuthUser } from '@/common/interfaces/auth-user.interface';
+import { Role } from '@/common/enums/role.enum';
 
 /*
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 | UserContextService
-|--------------------------------------------------------------------------
+|---------------------------------------------------------------------------
 |
 | Request-scoped service that stores the authenticated user
 | for the duration of a single HTTP request.
 |
-| This service acts as a centralized access point for the
-| current user, preventing the need to pass user identifiers
-| or objects through multiple application layers.
+| The user context is optional by design to support
+| unauthenticated (public) requests safely.
 |
 */
 @Injectable({ scope: Scope.REQUEST })
 export class UserContextService {
-  /*
-  |--------------------------------------------------------------------------
-  | user
-  |--------------------------------------------------------------------------
-  |
-  | Internal reference to the authenticated user associated
-  | with the current request lifecycle.
-  |
-  | This value is populated once by middleware after the
-  | authentication guard succeeds.
-  |
-  */
   private user: AuthUser | null = null;
 
   /*
-  |--------------------------------------------------------------------------
+  |---------------------------------------------------------------------------
   | setUser
-  |--------------------------------------------------------------------------
+  |---------------------------------------------------------------------------
   |
-  | Assigns the authenticated user to the current request
-  | context.
-  |
-  | This method is intended to be called exactly once per
-  | request by the UserContextMiddleware after successful
-  | authentication.
+  | Assigns the authenticated user to the current request context.
   |
   */
   setUser(user: AuthUser): void {
@@ -48,38 +31,76 @@ export class UserContextService {
   }
 
   /*
-  |--------------------------------------------------------------------------
+  |---------------------------------------------------------------------------
   | getUser
-  |--------------------------------------------------------------------------
+  |---------------------------------------------------------------------------
   |
-  | Retrieves the authenticated user from the request context.
-  |
-  | Throws an error if accessed before the user has been
-  | initialized, indicating an invalid access order or
-  | a missing authentication guard.
+  | Returns the authenticated user if present,
+  | or null for unauthenticated requests.
   |
   */
-  getUser(): AuthUser {
-    if (!this.user) {
-      throw new Error('UserContext not initialized');
-    }
-
+  getUser(): AuthUser | null {
     return this.user;
   }
 
   /*
-  |--------------------------------------------------------------------------
-  | getUserId
-  |--------------------------------------------------------------------------
+  |---------------------------------------------------------------------------
+  | isAuthenticated
+  |---------------------------------------------------------------------------
   |
-  | Convenience method for retrieving the authenticated
-  | user's unique identifier.
-  |
-  | Useful for application services that only require
-  | the user ID without accessing the full user object.
+  | Indicates whether the current request
+  | is associated with an authenticated user.
   |
   */
-  getUserId(): string {
-    return this.getUser().id;
+  isAuthenticated(): boolean {
+    return !!this.user;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | isAdmin
+  |--------------------------------------------------------------------------
+  |
+  | Checks whether the user has the ADMIN role.
+  |
+  */
+  isAdmin(): boolean {
+    return this.user?.role.includes(Role.ADMIN) ?? false;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | isEditor
+  |--------------------------------------------------------------------------
+  |
+  | Checks whether the user has the EDITOR role.
+  |
+  */
+  isEditor(): boolean {
+    return this.user?.role.includes(Role.EDITOR) ?? false;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | isViewer
+  |--------------------------------------------------------------------------
+  |
+  | Checks whether the user has the VIEWER role.
+  |
+  */
+  isViewer(): boolean {
+    return this.user?.role.includes(Role.VIEWER) ?? false;
+  }
+
+  /*
+  |---------------------------------------------------------------------------
+  | getUserId
+  |---------------------------------------------------------------------------
+  |
+  | Returns the authenticated user's ID if available.
+  |
+  */
+  getUserId(): string | null {
+    return this.user?.id ?? null;
   }
 }

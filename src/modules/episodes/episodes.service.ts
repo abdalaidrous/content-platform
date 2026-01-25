@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import { I18nService } from 'nestjs-i18n';
 import { PaginateConfig } from 'nestjs-paginate';
 
@@ -11,6 +11,7 @@ import { BaseCrudService } from '@/common/services/base-crud.service';
 import { Program } from '@/modules/programs/entities/program.entity';
 import { MESSAGES } from '@/common/constants/messages';
 import { EpisodeStatus } from '@/modules/episodes/enums/episode-status.enum';
+import { UserContextService } from '@/common/services/user-context.service';
 
 /*
 |--------------------------------------------------------------------------
@@ -70,9 +71,36 @@ export class EpisodesService extends BaseCrudService<
     private readonly episodeRepo: Repository<Episode>,
     @InjectRepository(Program)
     private readonly programRepo: Repository<Program>,
+    private readonly userContext: UserContextService,
     private readonly i18n: I18nService,
   ) {
     super(episodeRepo);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | applyVisibilityFilter
+  |--------------------------------------------------------------------------
+  |
+  | Allows extending services to apply visibility constraints
+  | (e.g. filtering active/inactive records based on user context).
+  |
+  | By default, no visibility filtering is applied.
+  |
+  */
+  protected applyVisibilityFilter(
+    where: FindOptionsWhere<Episode>,
+  ): FindOptionsWhere<Episode> {
+    if (this.userContext.isAdmin() || this.userContext.isEditor()) {
+      return where;
+    }
+
+    return {
+      ...where,
+      isActive: true,
+      status: EpisodeStatus.PUBLISHED,
+      deletedAt: IsNull(),
+    };
   }
 
   /*

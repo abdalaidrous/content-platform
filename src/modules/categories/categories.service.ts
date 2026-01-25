@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { I18nService } from 'nestjs-i18n';
+import { FindOptionsWhere, IsNull, Repository } from 'typeorm';
 import { PaginateConfig } from 'nestjs-paginate';
 
 import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { BaseCrudService } from '@/common/services/base-crud.service';
+import { UserContextService } from '@/common/services/user-context.service';
 
 /*
 |--------------------------------------------------------------------------
@@ -64,7 +64,33 @@ export class CategoriesService extends BaseCrudService<
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepo: Repository<Category>,
+    private readonly userContext: UserContextService,
   ) {
     super(categoryRepo);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | applyVisibilityFilter
+  |--------------------------------------------------------------------------
+  |
+  | Allows extending services to apply visibility constraints
+  | (e.g. filtering active/inactive records based on user context).
+  |
+  | By default, no visibility filtering is applied.
+  |
+  */
+  protected applyVisibilityFilter(
+    where: FindOptionsWhere<Category>,
+  ): FindOptionsWhere<Category> {
+    if (this.userContext.isAdmin() || this.userContext.isEditor()) {
+      return where;
+    }
+
+    return {
+      ...where,
+      isActive: true,
+      deletedAt: IsNull(),
+    };
   }
 }

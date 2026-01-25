@@ -46,6 +46,43 @@ export abstract class BaseCrudService<
 
   /*
   |--------------------------------------------------------------------------
+  | buildPaginateConfig
+  |--------------------------------------------------------------------------
+  |
+  | Builds the paginate configuration dynamically based on
+  | the applied visibility constraints.
+  |
+  | Ensures that empty WHERE clauses are not passed to
+  | the pagination layer to avoid invalid SQL generation.
+  |
+  */
+  protected buildPaginateConfig(
+    where?: FindOptionsWhere<Entity>,
+  ): PaginateConfig<Entity> {
+    return where && Object.keys(where).length > 0
+      ? { ...this.paginateConfig, where }
+      : this.paginateConfig;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | applyVisibilityFilter
+  |--------------------------------------------------------------------------
+  |
+  | Allows extending services to apply visibility constraints
+  | (e.g. filtering active/inactive records based on user context).
+  |
+  | By default, no visibility filtering is applied.
+  |
+  */
+  protected applyVisibilityFilter(
+    where: FindOptionsWhere<Entity>,
+  ): FindOptionsWhere<Entity> {
+    return where;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
   | beforeCreate
   |--------------------------------------------------------------------------
   |
@@ -94,7 +131,13 @@ export abstract class BaseCrudService<
   |
   */
   async findAll(query: PaginateQuery) {
-    return paginate(query, this.repository, this.paginateConfig);
+    return paginate(
+      query,
+      this.repository,
+      this.buildPaginateConfig(
+        this.applyVisibilityFilter({} as FindOptionsWhere<Entity>),
+      ),
+    );
   }
 
   /*
@@ -108,9 +151,11 @@ export abstract class BaseCrudService<
   |
   */
   async findOne(id: Entity['id']): Promise<Entity> {
-    const entity = await this.repository.findOneBy({
+    const where = this.applyVisibilityFilter({
       id,
     } as FindOptionsWhere<Entity>);
+
+    const entity = await this.repository.findOneBy(where);
 
     if (!entity) {
       throw new NotFoundException('Resource not found');

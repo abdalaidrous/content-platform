@@ -5,6 +5,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_READ_KEY } from '@/common/decorators/public-read.decorator';
 import { AuthUser } from '@/common/interfaces/auth-user.interface';
 import { FastifyRequest } from 'fastify';
+import { UserContextService } from '@/common/services/user-context.service';
 
 /*
 |--------------------------------------------------------------------------
@@ -21,7 +22,21 @@ import { FastifyRequest } from 'fastify';
 */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly reflector: Reflector) {
+
+  /*
+  |---------------------------------------------------------------------------
+  | Constructor
+  |---------------------------------------------------------------------------
+  |
+  | Injects framework and application-level dependencies required
+  | to evaluate route metadata and populate the request-scoped
+  | user context after successful authentication.
+  |
+  */
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly userContext: UserContextService,
+  ) {
     super();
   }
 
@@ -78,5 +93,24 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     |
     */
     return super.canActivate(context);
+  }
+
+  /*
+  |---------------------------------------------------------------------------
+  | handleRequest
+  |---------------------------------------------------------------------------
+  |
+  | Called by Passport after successful JWT validation.
+  |
+  | This is the earliest and safest point where the
+  | authenticated user is available.
+  |
+  */
+  handleRequest(err: any, user: any, _info: any, _context: ExecutionContext, _status?: any): any {
+    if (user) {
+      this.userContext.setUser(user as AuthUser);
+    }
+
+    return user;
   }
 }

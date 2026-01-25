@@ -1,3 +1,17 @@
+import { SetMetadata } from '@nestjs/common';
+
+/*
+|--------------------------------------------------------------------------
+| IS_PUBLIC_READ_KEY
+|--------------------------------------------------------------------------
+|
+| Metadata key used to mark routes as publicly readable.
+| This key is checked by authentication/authorization guards
+| to allow unauthenticated access for GET requests.
+|
+*/
+export const IS_PUBLIC_READ_KEY = 'isPublicRead';
+
 /*
 |--------------------------------------------------------------------------
 | PublicRead Decorator
@@ -7,8 +21,4 @@
 | Allows unauthenticated access for GET requests only.
 |
 */
-import { SetMetadata } from '@nestjs/common';
-
-export const IS_PUBLIC_READ_KEY = 'isPublicRead';
-
 export const PublicRead = () => SetMetadata(IS_PUBLIC_READ_KEY, true);

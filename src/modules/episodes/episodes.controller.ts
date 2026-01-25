@@ -10,6 +10,9 @@ import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { Role } from '@/common/enums/role.enum';
+import { PublicRead } from '@/common/decorators/public-read.decorator';
+import { SerializeByRole } from '@/common/decorators/serialize-by-role.decorator';
+import { EpisodeResponseDto } from '@/modules/episodes/dto/episode.response.dto';
 
 /*
 |--------------------------------------------------------------------------
@@ -22,8 +25,10 @@ import { Role } from '@/common/enums/role.enum';
 | to create, update, and manage episode metadata.
 |
 */
+@PublicRead()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN, Role.EDITOR)
+@SerializeByRole(EpisodeResponseDto)
 @Controller('episodes')
 export class EpisodesController extends CrudControllerFactory<
   Episode,
